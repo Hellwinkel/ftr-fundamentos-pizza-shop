@@ -10,7 +10,6 @@ import {
     Line,
     LineChart,
     ResponsiveContainer,
-    Tooltip,
     XAxis,
     YAxis,
 } from 'recharts'
@@ -78,6 +77,10 @@ export function RevenueChart() {
                                     currency: 'BRL',
                                 })
                             }
+                        />
+                        <CartesianGrid
+                            vertical={false}
+                            className='stroke-muted'
                         />
                         <Line
                             type='linear'
