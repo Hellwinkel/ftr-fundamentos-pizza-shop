@@ -19,12 +19,14 @@ export function AccountMenu() {
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile'],
     queryFn: getProfile,
+    staleTime: Infinity,
   })
 
   const { data: managedRestaurant, isLoading: isLoadingManagedRestaurant } =
     useQuery({
       queryKey: ['managed-restaurant'],
       queryFn: getManagedRestaurant,
+      staleTime: Infinity,
     })
 
   return (
@@ -36,7 +38,7 @@ export function AccountMenu() {
             className='flex items-center gap-2 select-none'
           >
             {isLoadingManagedRestaurant ? (
-              <Skeleton className='h-4 w-40' />
+              <Skeleton className='w-40 h-4' />
             ) : (
               managedRestaurant?.name
             )}
@@ -47,8 +49,8 @@ export function AccountMenu() {
           <DropdownMenuLabel className='flex flex-col'>
             {isLoadingProfile ? (
               <div className='space-y-1.5'>
-                <Skeleton className='h-4 w-32' />
-                <Skeleton className='h-3 w-24' />
+                <Skeleton className='w-32 h-4' />
+                <Skeleton className='w-24 h-3' />
               </div>
             ) : (
               <>
