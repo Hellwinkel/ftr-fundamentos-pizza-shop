@@ -15,10 +15,14 @@ export type GetOrdersResponse = {
   }
 }
 
-export async function getOrders() {
+export type GetOrdersQuery = {
+  pageIndex?: number | null
+}
+
+export async function getOrders({ pageIndex }: GetOrdersQuery) {
   const response = await api.get<GetOrdersResponse>('/orders', {
     params: {
-      pageIndex: 0,
+      pageIndex,
     },
   })
 
