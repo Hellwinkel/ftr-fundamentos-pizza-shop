@@ -3,8 +3,22 @@ import { Dialog, DialogTrigger } from '@/components/ui/dialog'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { ArrowRight, Search, X } from 'lucide-react'
 import { OrderDetails } from './order-details'
+import { OrderStatus } from './order-status'
 
-export function OrderTableRow() {
+import { formatDistanceToNow } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+
+export type OrderTableRowProps = {
+  order: {
+    orderId: string
+    createdAt: string
+    status: 'pending' | 'canceled' | 'processing' | 'delivering' | 'delivered'
+    customerName: string
+    total: number
+  }
+}
+
+export function OrderTableRow({ order }: OrderTableRowProps) {
   return (
     <TableRow>
       <TableCell>
@@ -19,17 +33,24 @@ export function OrderTableRow() {
         </Dialog>
       </TableCell>
       <TableCell className='font-mono text-sm font-medium'>
-        198ue298sj128314h
+        {order.orderId}
       </TableCell>
-      <TableCell className='text-muted-foreground'>há 15 minutos</TableCell>
+      <TableCell className='text-muted-foreground'>
+        {formatDistanceToNow(order.createdAt, {
+          locale: ptBR,
+          addSuffix: true,
+        })}
+      </TableCell>
       <TableCell>
-        <div className='flex items-center gap-2'>
-          <span className='h-2 w-2 rounded-full bg-slate-400' />
-          <span className='font-medium text-muted-foreground'>Pendente</span>
-        </div>
+        <OrderStatus status={order.status} />
       </TableCell>
-      <TableCell className='font-medium'>Guilherme Hellwinkel</TableCell>
-      <TableCell className='font-medium'>R$ 124,98</TableCell>
+      <TableCell className='font-medium'>{order.customerName}</TableCell>
+      <TableCell className='font-medium'>
+        {order.total.toLocaleString('pr-BR', {
+          currency: 'BRL',
+          style: 'currency',
+        })}
+      </TableCell>
       <TableCell>
         <Button variant='outline' size='sm'>
           <ArrowRight className='h-3 w-3 mr-2' />
