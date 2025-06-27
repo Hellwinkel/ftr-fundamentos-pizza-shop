@@ -5,7 +5,10 @@ import { ArrowRight, Search, X } from 'lucide-react'
 import { OrderDetails } from './order-details'
 import { OrderStatus } from './order-status'
 
+import { approveOrder } from '@/api/approve-order'
 import { cancelOrder } from '@/api/cancel-order'
+import { deliverOrder } from '@/api/deliver-order'
+import { dispatchOrder } from '@/api/dispatch-order'
 import type { GetOrdersResponse } from '@/api/get-orders'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -26,29 +29,58 @@ export function OrderTableRow({ order }: OrderTableRowProps) {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const queryClient = useQueryClient()
 
-  const { mutateAsync: cancelOrderFn } = useMutation({
-    mutationFn: cancelOrder,
-    async onSuccess(_, { orderId }) {
-      const ordersListCache = queryClient.getQueriesData<GetOrdersResponse>({
-        queryKey: ['orders'],
+  function updateOrderStatusOnCache(orderId: string, status: OrderStatus) {
+    const ordersListCache = queryClient.getQueriesData<GetOrdersResponse>({
+      queryKey: ['orders'],
+    })
+
+    ordersListCache.forEach(([cacheKey, cacheData]) => {
+      if (!cacheData) return
+
+      queryClient.setQueryData<GetOrdersResponse>(cacheKey, {
+        ...cacheData,
+        orders: cacheData.orders.map((order) => {
+          if (order.orderId === orderId) {
+            return { ...order, status }
+          }
+
+          return order
+        }),
       })
+    })
+  }
 
-      ordersListCache.forEach(([cacheKey, cacheData]) => {
-        if (!cacheData) return
+  const { mutateAsync: cancelOrderFn, isLoading: isCancelingOrder } =
+    useMutation({
+      mutationFn: cancelOrder,
+      async onSuccess(_, { orderId }) {
+        updateOrderStatusOnCache(orderId, 'canceled')
+      },
+    })
 
-        queryClient.setQueryData<GetOrdersResponse>(cacheKey, {
-          ...cacheData,
-          orders: cacheData.orders.map((order) => {
-            if (order.orderId === orderId) {
-              return { ...order, status: 'canceled' }
-            }
+  const { mutateAsync: approveOrderFn, isLoading: isApprovingOrder } =
+    useMutation({
+      mutationFn: approveOrder,
+      async onSuccess(_, { orderId }) {
+        updateOrderStatusOnCache(orderId, 'processing')
+      },
+    })
 
-            return order
-          }),
-        })
-      })
-    },
-  })
+  const { mutateAsync: dispatchOrderFn, isLoading: isDispatchingOrder } =
+    useMutation({
+      mutationFn: dispatchOrder,
+      async onSuccess(_, { orderId }) {
+        updateOrderStatusOnCache(orderId, 'delivering')
+      },
+    })
+
+  const { mutateAsync: deliverOrderFn, isLoading: isDeliveringOrder } =
+    useMutation({
+      mutationFn: deliverOrder,
+      async onSuccess(_, { orderId }) {
+        updateOrderStatusOnCache(orderId, 'delivered')
+      },
+    })
 
   return (
     <TableRow>
@@ -83,14 +115,47 @@ export function OrderTableRow({ order }: OrderTableRowProps) {
         })}
       </TableCell>
       <TableCell>
-        <Button variant='outline' size='sm'>
-          <ArrowRight className='h-3 w-3 mr-2' />
-          Aprovar
-        </Button>
+        {order.status === 'pending' && (
+          <Button
+            onClick={() => approveOrderFn({ orderId: order.orderId })}
+            disabled={isApprovingOrder}
+            variant='outline'
+            size='sm'
+          >
+            <ArrowRight className='h-3 w-3 mr-2' />
+            Aprovar
+          </Button>
+        )}
+
+        {order.status === 'processing' && (
+          <Button
+            onClick={() => dispatchOrderFn({ orderId: order.orderId })}
+            disabled={isDispatchingOrder}
+            variant='outline'
+            size='sm'
+          >
+            <ArrowRight className='h-3 w-3 mr-2' />
+            Em entrega
+          </Button>
+        )}
+        {order.status === 'delivering' && (
+          <Button
+            onClick={() => deliverOrderFn({ orderId: order.orderId })}
+            disabled={isDeliveringOrder}
+            variant='outline'
+            size='sm'
+          >
+            <ArrowRight className='h-3 w-3 mr-2' />
+            Entregue
+          </Button>
+        )}
       </TableCell>
       <TableCell>
         <Button
-          disabled={!['pending', 'processing'].includes(order.status)}
+          disabled={
+            !['pending', 'processing'].includes(order.status) ||
+            isCancelingOrder
+          }
           variant='ghost'
           size='sm'
           onClick={() => cancelOrderFn({ orderId: order.orderId })}
