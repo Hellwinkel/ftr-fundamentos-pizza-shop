@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { useQuery } from 'react-query'
 import {
@@ -27,7 +28,7 @@ export function RevenueChart() {
   const chartData = useMemo(() => {
     return dailyRevenueInPeriod?.map((chartItem) => {
       return {
-        chartData: chartItem.date,
+        date: chartItem.date,
         receipt: chartItem.receipt / 100,
       }
     })
@@ -44,7 +45,7 @@ export function RevenueChart() {
         </div>
       </CardHeader>
       <CardContent>
-        {chartData && (
+        {chartData ? (
           <ResponsiveContainer width='100%' height={240}>
             <LineChart data={chartData} style={{ fontSize: 12 }}>
               <XAxis dataKey='date' axisLine={false} tickLine={false} dy={16} />
@@ -65,10 +66,14 @@ export function RevenueChart() {
                 type='linear'
                 strokeWidth={2}
                 dataKey='receipt'
-                stroke={colors.violet['400']}
+                stroke={colors.violet['500']}
               />
             </LineChart>
           </ResponsiveContainer>
+        ) : (
+          <div className='flex h-[240px] w-full items-center justify-center'>
+            <Loader2 className='h-8 w-8 text-muted-foreground animate-spin' />
+          </div>
         )}
       </CardContent>
     </Card>
